@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>803</width>
-    <height>487</height>
+    <width>802</width>
+    <height>602</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,9 +18,9 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>10</y>
+      <y>20</y>
       <width>781</width>
-      <height>601</height>
+      <height>541</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -44,10 +44,10 @@
     <widget class="QFrame" name="frame">
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>100</y>
-       <width>701</width>
-       <height>331</height>
+       <x>50</x>
+       <y>80</y>
+       <width>681</width>
+       <height>361</height>
       </rect>
      </property>
      <property name="autoFillBackground">
@@ -64,10 +64,13 @@ Qframe#frame{
 </string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::VLine</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Sunken</enum>
+     </property>
+     <property name="lineWidth">
+      <number>1</number>
      </property>
     </widget>
     <widget class="QLabel" name="peashooter">
@@ -87,6 +90,15 @@ Qframe#frame{
      </property>
      <property name="styleSheet">
       <string notr="true">border-bottom-color: rgb(85, 170, 255);</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
      </property>
      <property name="text">
       <string/>
@@ -116,6 +128,15 @@ Qframe#frame{
      <property name="acceptDrops">
       <bool>true</bool>
      </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
+     </property>
      <property name="text">
       <string/>
      </property>
@@ -140,6 +161,15 @@ Qframe#frame{
      </property>
      <property name="acceptDrops">
       <bool>true</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
      </property>
      <property name="text">
       <string/>
@@ -166,6 +196,15 @@ Qframe#frame{
      <property name="acceptDrops">
       <bool>true</bool>
      </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
+     </property>
      <property name="text">
       <string/>
      </property>
@@ -190,6 +229,15 @@ Qframe#frame{
      </property>
      <property name="acceptDrops">
       <bool>true</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
      </property>
      <property name="text">
       <string/>
@@ -216,6 +264,15 @@ Qframe#frame{
      <property name="acceptDrops">
       <bool>true</bool>
      </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
+     </property>
      <property name="text">
       <string/>
      </property>
@@ -240,6 +297,12 @@ Qframe#frame{
      </property>
      <property name="acceptDrops">
       <bool>true</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
      </property>
      <property name="text">
       <string/>
@@ -266,6 +329,15 @@ Qframe#frame{
      <property name="acceptDrops">
       <bool>true</bool>
      </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
+     </property>
      <property name="text">
       <string/>
      </property>
@@ -290,6 +362,15 @@ Qframe#frame{
      </property>
      <property name="acceptDrops">
       <bool>true</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
      </property>
      <property name="text">
       <string/>
@@ -316,6 +397,15 @@ Qframe#frame{
      <property name="acceptDrops">
       <bool>true</bool>
      </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
+     </property>
      <property name="text">
       <string/>
      </property>
@@ -341,6 +431,15 @@ Qframe#frame{
      <property name="acceptDrops">
       <bool>true</bool>
      </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
+     </property>
      <property name="text">
       <string/>
      </property>
@@ -365,6 +464,15 @@ Qframe#frame{
      </property>
      <property name="acceptDrops">
       <bool>true</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>2</number>
      </property>
      <property name="text">
       <string/>

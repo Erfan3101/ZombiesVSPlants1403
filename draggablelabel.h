@@ -1,22 +1,25 @@
-#ifndef DRAGGABLELABEL_H
-#define DRAGGABLELABEL_H
-#include <QLabel>
-#include <QMouseEvent>
-#include <QDrag>
-#include <QMimeData>
-#include <QPixmap>
+#ifndef MOVETHREAD_H
+#define MOVETHREAD_H
 
-class DraggableLabel : public QLabel
+#include <QThread>
+#include <QLabel>
+
+class MoveThread : public QThread
 {
     Q_OBJECT
 
 public:
+    explicit MoveThread(QLabel *label, QWidget *field, int speed, QObject *parent = nullptr);
+      void run() override;
 
-
-protected:
+signals:
+    void gameOver();
 
 private:
-
+    QLabel *label;
+    int start_x, start_y, field_width;
+      QWidget *field;
+      int speed;
 };
 
-#endif // DRAGGABLELABEL_H
+#endif // MOVETHREAD_H
