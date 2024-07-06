@@ -484,6 +484,19 @@ Qframe#frame{
       <bool>true</bool>
      </property>
     </widget>
+    <zorder>frame</zorder>
+    <zorder>regular</zorder>
+    <zorder>bucked_head</zorder>
+    <zorder>leafhead</zorder>
+    <zorder>astronaut</zorder>
+    <zorder>tall</zorder>
+    <zorder>purplehair</zorder>
+    <zorder>boomerang</zorder>
+    <zorder>jelapino</zorder>
+    <zorder>plum_mine</zorder>
+    <zorder>walnut</zorder>
+    <zorder>two_peashooter</zorder>
+    <zorder>peashooter</zorder>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>

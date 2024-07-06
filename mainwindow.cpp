@@ -49,6 +49,18 @@ setAcceptDrops(true);
   speedMap["astronaut"] = 200;
   speedMap["purplehair"] = 200;
   speedMap["tall"] = 200;
+  // Define grid layout (adjust cell size based on your image dimensions)
+
+
+
+  // Calculate grid cell dimensions
+  gridRows = 6;
+  gridCols = 15;
+
+  // Calculate cell width and height based on the adjusted frame dimensions
+  cellWidth = (ui->frame->width() - 100) / gridCols;  // Subtract 50 pixels from each side
+  cellHeight = (ui->frame->height() - 150) / gridRows; // Subtract 100 pixels from the top and bottom, leave 50
+
 
 }
 MainWindow::~MainWindow()
@@ -118,6 +130,8 @@ void MainWindow::dropEvent(QDropEvent *event)
                 newLabel->setScaledContents(true); // Ensure image scales to label size
                 newLabel->show();
 
+                QPoint snappedPos = snapToCell(event->position().toPoint());
+                           newLabel->move(snappedPos);
                 // Start a new thread to move the label
                 MoveThread *moveThread = new MoveThread(newLabel, ui->frame,speed, this);
                 connect(moveThread, &MoveThread::gameOver, this, &MainWindow::gameOver);
@@ -141,11 +155,20 @@ void MainWindow::dropEvent(QDropEvent *event)
                     //moveThreads.append(moveThread);
                    // moveThread->start();
                     QString plantType = event->mimeData()->text();
+                    QPoint snappedPos = snapToCell(event->position().toPoint());
+                               newLabel->move(snappedPos);
             }
                 event->acceptProposedAction();
             }
 
 }
+QPoint MainWindow::snapToCell(const QPoint &pos)
+{
+    int x = (pos.x() / cellWidth) * cellWidth;  // Snap to the nearest cell boundary
+    int y = (pos.y() / cellHeight) * cellHeight;
+    return QPoint(x, y);
+}
+
 void MainWindow::gameOver()
 {
     if (!gameEnded) {

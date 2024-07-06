@@ -24,6 +24,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
 protected:
 
 private slots:
@@ -33,6 +34,7 @@ private slots:
           void mouseMoveEvent(QMouseEvent *event) override;
           void dragEnterEvent(QDragEnterEvent *event) override;
           void dropEvent(QDropEvent *event) override;
+
       //void moveLabel();
 private:
     Ui::MainWindow *ui;
@@ -46,7 +48,19 @@ private:
         QMap<QString,QString>plantslabel;// Mapping source labels to specific appearing labels
         QVector<MoveThread*> moveThreads;
          bool gameEnded;
+         // Define grid layout (adjust cell size based on your image dimensions)
+         int parentWidth;
+         int parentHeight ;
+         int centerX ;
+         int centerY ;
+          int gridRows ;
+          int gridCols ;
+          int cellWidth ;
+          int cellHeight ;
+          QPoint snapToCell(const QPoint &pos);
 public slots:
     void gameOver();
 };
+
+
 #endif // MAINWINDOW_H

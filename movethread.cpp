@@ -7,21 +7,22 @@ MoveThread::MoveThread(QLabel *label, QWidget *field, int speed, QObject *parent
 
 void MoveThread::run()
 {
-    bool gameEnded = false; // Flag to ensure game over is only emitted once
-    while (label->x() + label->width() > 0) {
-        QMetaObject::invokeMethod(label, [this, &gameEnded]() {
-            if (!gameEnded) {
-                int x = label->x() - 5;
-                int y = label->y();
-                label->move(x, y);
+    while (true) {
+           if (!label->isVisible()) break;
 
-                // Check if the label has reached the end of the frame
-                if (x <=  80 ) {
-                    emit gameOver();
-                    gameEnded = true; // Set the flag to true to prevent further emissions
-                }
-            }
-        }, Qt::QueuedConnection);
-        msleep(speed); // Adjust speed here
-    }
+           // Move the label to the left
+           label->move(label->x() - 1, label->y()); // Adjust the movement logic as needed
+
+           // Check if the label has reached the left boundary of the frame
+           if (label->x() + label->width() < field->x()) {
+               emit gameOver(); // Signal game over if a zombie reaches the end
+               break;
+           }
+
+           // Adjust the speed of movement
+           msleep(speed); // msleep is a static function of QThread to pause execution
+
+           // Ensure GUI updates properly
+           field->update();
+       }
 }
