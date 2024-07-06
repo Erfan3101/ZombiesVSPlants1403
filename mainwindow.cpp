@@ -35,7 +35,14 @@ setAcceptDrops(true);
   labelMap["tall"] = ":/zombies_p/tall zombie_transparent.png";
   labelMap["astronaut"] = ":/zombies_p/astronaut zombie_transparent.png";
   labelMap["purplehair"] = ":/zombies_p/purple hair zombie_transparent.png";
-
+/////////////////////
+  plantslabel["boomerang"]=":/plants/boomrang_transparent.png";
+  plantslabel["jelapino"]=":/plants/jalapino_transparent.png";
+  plantslabel["peashooter"]=":/plants/peashooter";
+  plantslabel["plum_mine"]=":/plants/plum mine_transparent.png";
+  plantslabel["two_peashooter"]=":/plants/two_peashooter_transparent.png";
+  plantslabel["walnut"]=":/plants/walnut_transparent.png";
+  ///////////////////
   speedMap["regular"] = 200;
   speedMap["bucked_head"] = 400;
   speedMap["leafhead"] = 200;
@@ -116,10 +123,27 @@ void MainWindow::dropEvent(QDropEvent *event)
                 connect(moveThread, &MoveThread::gameOver, this, &MainWindow::gameOver);
                 moveThreads.append(moveThread);
                 moveThread->start();
+                QString plantType = event->mimeData()->text();
+}
+                else if (plantslabel.contains(labelName)) {
+                    QString pixmapPath = plantslabel[labelName];
+                    //int speed = speedMap[labelName];
+                    // Create a new QLabel at the drop position
+                    QLabel *newLabel = new QLabel(this);
+                    newLabel->setPixmap(QPixmap(pixmapPath).scaled(50, 50, Qt::KeepAspectRatio)); // Example size
+                    newLabel->setGeometry(event->position().toPoint().x(), event->position().toPoint().y(), 30, 40); // Example size
+                    newLabel->setScaledContents(true); // Ensure image scales to label size
+                    newLabel->show();
 
+                    // Start a new thread to move the label
+                    //MoveThread *moveThread = new MoveThread(newLabel, ui->frame,speed, this);
+                    //connect(moveThread, &MoveThread::gameOver, this, &MainWindow::gameOver);
+                    //moveThreads.append(moveThread);
+                   // moveThread->start();
+                    QString plantType = event->mimeData()->text();
+            }
                 event->acceptProposedAction();
             }
-        }
 
 }
 void MainWindow::gameOver()
@@ -129,13 +153,13 @@ void MainWindow::gameOver()
            QMessageBox::information(this, "Game Over", "A zombie reached the end of the frame. Game Over!");
 
            // Stop all running threads
-           for (auto thread : moveThreads) {
-               thread->quit();
-               thread->wait();
-           }
+           //for (auto thread : moveThreads) {
+          //     thread->quit();
+          //     thread->wait();
+          // }
 
            // Optionally, you can close the application
-           qApp->quit();
+          // qApp->quit();
        }
 
 }

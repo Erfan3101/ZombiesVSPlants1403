@@ -10,7 +10,7 @@
 #include <QTimer>
 #include <vector>
 #include <QMessageBox>
-#include "draggablelabel.h"
+#include "movethread.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -42,7 +42,8 @@ private:
        // QLabel *movingLabel;
        // std::vector<QLabel *> movingLabels;
       QMap<QString, int> speedMap; // Mapping source labels to specific speeds
-        QMap<QString, QString> labelMap; // Mapping source labels to specific appearing labels
+        QMap<QString, QString> labelMap;
+        QMap<QString,QString>plantslabel;// Mapping source labels to specific appearing labels
         QVector<MoveThread*> moveThreads;
          bool gameEnded;
 public slots:

@@ -1,4 +1,4 @@
-#include "draggablelabel.h"
+#include "movethread.h"
 
 MoveThread::MoveThread(QLabel *label, QWidget *field, int speed, QObject *parent)
     : QThread(parent), label(label), field(field), speed(speed)
@@ -16,7 +16,7 @@ void MoveThread::run()
                 label->move(x, y);
 
                 // Check if the label has reached the end of the frame
-                if (x <=  field->width() ) {
+                if (x <=  80 ) {
                     emit gameOver();
                     gameEnded = true; // Set the flag to true to prevent further emissions
                 }
