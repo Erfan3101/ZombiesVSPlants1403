@@ -14,23 +14,19 @@ SOURCES += \
     SunBrainThread.cpp \
     energymanager.cpp \
     main.cpp \
-    mainwindow.cpp \
-    movethread.cpp \
-    plants.cpp \
-    zombie.cpp
+    mainwindow2.cpp \
+    movethread.cpp
 
 HEADERS += \
     JalapenoMoveThread.h \
     ShootThread.h \
     SunBrainThread.h \
     energymanager.h \
-    mainwindow.h \
-    movethread.h \
-    plants.h \
-    zombie.h
+    mainwindow2.h \
+    movethread.h
 
 FORMS += \
-    mainwindow.ui
+    mainwindow2.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
