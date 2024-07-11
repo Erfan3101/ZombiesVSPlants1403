@@ -1,5 +1,5 @@
 QT       += core gui
-
+CONFIG += debug
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
@@ -9,6 +9,10 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    JalapenoMoveThread.cpp \
+    ShootThread.cpp \
+    SunBrainThread.cpp \
+    energymanager.cpp \
     main.cpp \
     mainwindow.cpp \
     movethread.cpp \
@@ -16,6 +20,10 @@ SOURCES += \
     zombie.cpp
 
 HEADERS += \
+    JalapenoMoveThread.h \
+    ShootThread.h \
+    SunBrainThread.h \
+    energymanager.h \
     mainwindow.h \
     movethread.h \
     plants.h \

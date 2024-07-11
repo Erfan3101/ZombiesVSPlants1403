@@ -2,20 +2,26 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QLabel>
+#include <QList>
+#include <QMap>
+#include <QProgressBar>
+#include <QMouseEvent>
 #include <QDragEnterEvent>
 #include <QDropEvent>
-#include <QMimeData>
-#include <QMouseEvent>
 #include <QTimer>
-#include <vector>
+#include <QRandomGenerator>
 #include <QMessageBox>
+#include <QPropertyAnimation>
+#include <QAbstractAnimation>
+#include <QThreadPool>
 #include "movethread.h"
+#include "JalapenoMoveThread.h"
+#include "ShootThread.h"
+#include "energymanager.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
-
 
 class MainWindow : public QMainWindow
 {
@@ -26,41 +32,52 @@ public:
     ~MainWindow();
 
 protected:
-
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
+    void closeEvent(QCloseEvent *event)override;
 private slots:
+    void gameOver();
+    void onProjectileHitZombie(QLabel *projectile);
+   void updateCornometer();
 
-    //void mousePressEvent(QMouseEvent *event) override;
-        void mousePressEvent(QMouseEvent *event) override;
-          void mouseMoveEvent(QMouseEvent *event) override;
-          void dragEnterEvent(QDragEnterEvent *event) override;
-          void dropEvent(QDropEvent *event) override;
-
-      //void moveLabel();
 private:
     Ui::MainWindow *ui;
-    //void setupLabels();
-      QLabel *currentLabel = nullptr;
-      QTimer *moveTimer;
-       // QLabel *movingLabel;
-       // std::vector<QLabel *> movingLabels;
-      QMap<QString, int> speedMap; // Mapping source labels to specific speeds
-        QMap<QString, QString> labelMap;
-        QMap<QString,QString>plantslabel;// Mapping source labels to specific appearing labels
-        QVector<MoveThread*> moveThreads;
-         bool gameEnded;
-         // Define grid layout (adjust cell size based on your image dimensions)
-         int parentWidth;
-         int parentHeight ;
-         int centerX ;
-         int centerY ;
-          int gridRows ;
-          int gridCols ;
-          int cellWidth ;
-          int cellHeight ;
-          QPoint snapToCell(const QPoint &pos);
-public slots:
-    void gameOver();
-};
+    QList<MoveThread *> moveThreads;
+    QList<QLabel *> zombies;
+    QList<QLabel *> plants;
+    QMap<QString, QString> labelMap;
+    QMap<QString, int> speedMap;
+    QMap<QString, QString> plantslabel;
+    QMap<QString, QString> shoot;
+    QMap<QString, QString> food;
+    QMap<QLabel*, QProgressBar*> zombieProgressBars;
+    QLabel *currentProjectile;
+    QProgressBar *energyProgressBar;
+    QLabel *currentLabel;
+    bool gameEnded;
+    QStringList zombieNames ;
+    int gridRows;
+    int gridCols;
+    int cellWidth;
+    int cellHeight;
+    EnergyManager *energyManager;
+    QMap<QLabel*, int> zombieEnergyMap;
+    QPoint snapToCell(const QPoint &pos);
+    bool isZombieInRow(int y);
+    void updateProjectilePosition();
+    void updateEnergy(int currentEnergy);
+    void updateEnergyProgressBar(int currentEnergy);
+    bool checkProjectileZombieCollision(QLabel *projectile, QLabel *zombie);
+    void dropRandomObject();
+    void setupZombieLabels();
+    void jalapenoEnergyChanged(QLabel *zombie, int damage);
+    void stopThreads();
+    ShootThread *shootThread;
+    QTimer *timer;
+    int elapsedTime;
 
+ };
 
 #endif // MAINWINDOW_H

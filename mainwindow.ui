@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>802</width>
-    <height>602</height>
+    <width>803</width>
+    <height>534</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,9 +18,9 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>20</y>
+      <y>10</y>
       <width>781</width>
-      <height>541</height>
+      <height>511</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -39,40 +39,8 @@
      <bool>true</bool>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color: rgb(85, 255, 127);</string>
+     <string notr="true">background-image: url(:/field/field.png);</string>
     </property>
-    <widget class="QFrame" name="frame">
-     <property name="geometry">
-      <rect>
-       <x>50</x>
-       <y>80</y>
-       <width>681</width>
-       <height>361</height>
-      </rect>
-     </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">image: url(:/field/field.png);
-Qframe#frame{
-    background-image: (url:/field/field.png);
-    background-repeat: no-repeat;
-    background-position: center;
-}
-
-</string>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::VLine</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Sunken</enum>
-     </property>
-     <property name="lineWidth">
-      <number>1</number>
-     </property>
-    </widget>
     <widget class="QLabel" name="peashooter">
      <property name="geometry">
       <rect>
@@ -484,7 +452,60 @@ Qframe#frame{
       <bool>true</bool>
      </property>
     </widget>
-    <zorder>frame</zorder>
+    <widget class="QProgressBar" name="plantsProgressBar">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>110</y>
+       <width>371</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">color: rgb(0, 0, 127);</string>
+     </property>
+     <property name="value">
+      <number>0</number>
+     </property>
+    </widget>
+    <widget class="QProgressBar" name="zombiesProgressBar">
+     <property name="geometry">
+      <rect>
+       <x>420</x>
+       <y>110</y>
+       <width>361</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">color: rgb(170, 0, 127);</string>
+     </property>
+     <property name="value">
+      <number>0</number>
+     </property>
+    </widget>
+    <widget class="QProgressBar" name="cornometerProgressBar">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>470</y>
+       <width>761</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="cursor">
+      <cursorShape>WaitCursor</cursorShape>
+     </property>
+     <property name="maximum">
+      <number>210</number>
+     </property>
+     <property name="value">
+      <number>0</number>
+     </property>
+     <property name="format">
+      <string extracomment="time remaining"/>
+     </property>
+    </widget>
     <zorder>regular</zorder>
     <zorder>bucked_head</zorder>
     <zorder>leafhead</zorder>
@@ -497,6 +518,9 @@ Qframe#frame{
     <zorder>walnut</zorder>
     <zorder>two_peashooter</zorder>
     <zorder>peashooter</zorder>
+    <zorder>plantsProgressBar</zorder>
+    <zorder>zombiesProgressBar</zorder>
+    <zorder>cornometerProgressBar</zorder>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>

@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/field">
         <file>field.png</file>
+        <file>field2.png</file>
     </qresource>
     <qresource prefix="/plants">
         <file>peashooter</file>
@@ -33,5 +34,17 @@
         <file>purple hair zombie_transparent.png</file>
         <file>regular zombie_transparent.png</file>
         <file>tall zombie_transparent.png</file>
+    </qresource>
+    <qresource prefix="/zombiesgif">
+        <file>regulargif.mp4</file>
+        <file>astronautgif.mp4</file>
+        <file>buckedheadgif.mp4</file>
+    </qresource>
+    <qresource prefix="/shoots">
+        <file>shoot2.png</file>
+        <file>zombies VS plants pictures/Brain.png</file>
+        <file>zombies VS plants pictures/sun.png</file>
+        <file>zombies VS plants pictures/shoot.png</file>
+        <file>zombies VS plants pictures/shoot3.png</file>
     </qresource>
 </RCC>

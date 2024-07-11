@@ -3,7 +3,7 @@
 #include <QDrag>
 #include <QMimeData>
 #include <QLabel>
-
+#include <stdexcept>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -11,8 +11,27 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , currentLabel(nullptr)
     , gameEnded(false)
+    , timer(new QTimer(this))
+    , elapsedTime(0)
+
 {
     ui->setupUi(this);
+    ////////////////////////////////
+
+    QTimer *fallingObjectTimer = new QTimer(this);
+     connect(fallingObjectTimer, &QTimer::timeout, this, &MainWindow::dropRandomObject);
+     fallingObjectTimer->start(4000);
+    QStringList plantNames = {"peashooter", "two_peashooter", "walnut", "plum_mine", "jelapino", "boomerang"};
+      zombieNames = {"regular", "bucked_head", "leafhead", "tall", "astronaut", "purplehair"};
+
+       for (const QString &name : plantNames + zombieNames) {
+           QLabel *label = findChild<QLabel*>(name);
+           if (label) {
+               label->setAcceptDrops(true);
+           }
+       }
+       setAcceptDrops(true);
+
     //impelement the ui picture for drag and drop
 ui->peashooter->setAcceptDrops(true);
 ui->two_peashooter->setAcceptDrops(true);
@@ -26,7 +45,7 @@ ui->leafhead->setAcceptDrops(true);
 ui->tall->setAcceptDrops(true);
 ui->astronaut->setAcceptDrops(true);
 ui->purplehair->setAcceptDrops(true);
-setAcceptDrops(true);
+//setAcceptDrops(true);
  //connect(moveTimer, &QTimer::timeout, this, &MainWindow::moveLabel);
  // Map source labels to the specific appearing labels
   labelMap["regular"] = ":/zombies_p/regular zombie_transparent.png";
@@ -49,140 +68,644 @@ setAcceptDrops(true);
   speedMap["astronaut"] = 200;
   speedMap["purplehair"] = 200;
   speedMap["tall"] = 200;
-  // Define grid layout (adjust cell size based on your image dimensions)
-
-
-
+  ////////////////////////////////
+  shoot["peashooter"]=":/shoots/zombies VS plants pictures/shoot.png";
+  shoot["two_peashooter"]=":/shoots/shoot2.png";
+  shoot["boomerang"]=":/shoots/zombies VS plants pictures/shoot3.png";
+  ///////////////////
+food["sun"]=":/shoots/zombies VS plants pictures/sun.png";
+food["brain"]=":/shoots/zombies VS plants pictures/Brain.png";
   // Calculate grid cell dimensions
-  gridRows = 6;
-  gridCols = 15;
+      gridRows = 6;
+      gridCols = 15;
 
-  // Calculate cell width and height based on the adjusted frame dimensions
-  cellWidth = (ui->frame->width() - 100) / gridCols;  // Subtract 50 pixels from each side
-  cellHeight = (ui->frame->height() - 150) / gridRows; // Subtract 100 pixels from the top and bottom, leave 50
+      // Calculate cell width and height based on the adjusted frame dimensions
+      cellWidth = (width() ) / gridCols; // Subtract 50 pixels from each side
+      cellHeight = (height()) / gridRows; // Subtract 100 pixels from the top and bottom, leave 50
+ /////////////////////////////////////
+  //ui->cornometerProgressBar->setStyleSheet(
+    //  "QProgressBar {"
+    //  "    border: 2px solid grey;"
+     // "    border-radius: 5px;"
+    //  "    text-align: center;"
+     // "    background: white;"
+     // "}"
+     // "QProgressBar::chunk {"
+     // "    background-color: green;"
+     // "    width: 20px;"
+     // "}" );
 
+  // Connect the timer signal to the update slot
+  connect(timer, &QTimer::timeout, this, &MainWindow::updateCornometer);
 
+  // Start the timer to update every second (1000 ms)
+  timer->start(1000);
 }
 MainWindow::~MainWindow()
 {
-    for (auto thread : moveThreads) {
-           thread->quit();
-           thread->wait();
-           delete thread;
-       }
+    stopThreads();
+
+    for (auto it = zombieProgressBars.begin(); it!= zombieProgressBars.end(); ++it) {
+        delete it.key();
+        delete it.value();
+    }
+    zombieProgressBars.clear();
+
+
+
     delete ui;
 }
 
 
-
-void MainWindow::mousePressEvent(QMouseEvent *event)
+void MainWindow::stopThreads()
 {
-    if (event->button() == Qt::LeftButton) {
-        QLabel *label = dynamic_cast<QLabel*>(childAt(event->pos()));
-        if (label && (label->objectName() == "peashooter" || label->objectName() == "two_peashooter" ||label->objectName() =="walnut"||label->objectName() =="plum_mine"||label->objectName() =="jelapino"||label->objectName() =="boomerang"||label->objectName() == "regular" || label->objectName() == "bucked_head" ||label->objectName() =="leafhead"||label->objectName() =="tall"||label->objectName() =="astronaut"||label->objectName() =="purplehair")) {
-            currentLabel = label;
+    for (auto thread : moveThreads) {
+        if (thread->isRunning()) {
+            thread->requestInterruption();
+            thread->wait(); // Wait for the thread to finish
+        }
+        delete thread;
+    }
+    moveThreads.clear();
+}
 
-            // Create a QDrag object
-            QDrag *drag = new QDrag(this);
-            QMimeData *mimeData = new QMimeData;
 
-            // Set a textual representation of the object being dragged
-            mimeData->setText("DraggedLabel");
-            drag->setMimeData(mimeData);
+    void MainWindow::mousePressEvent(QMouseEvent *event)
+    {
+        try {
+            if (event->button() == Qt::LeftButton) {
+                QLabel *label = dynamic_cast<QLabel*>(childAt(event->pos()));
 
-            // Set the pixmap to be dragged (scaled to the label size)
-            drag->setPixmap(label->pixmap().scaled(label->size(), Qt::KeepAspectRatio));
+                // Check if brain progress bar is at least 10% for regular zombie
+                if (label && label->objectName().startsWith("regular")) {
+                    int brainProgress = ui->zombiesProgressBar->value();
+                    if (brainProgress < 10) {
+                        qDebug() << "Cannot pick regular zombie yet. Brain progress: " << brainProgress;
+                        return;
+                    }else
+                         ui->zombiesProgressBar->setValue(brainProgress - 10);
+                }
 
-            // Start the drag operation
-            Qt::DropAction dropAction = drag->exec(Qt::CopyAction | Qt::MoveAction);
+                // Check if brain progress bar is at least 15% for tall and leafhead zombies
+                if (label && (label->objectName().startsWith("tall") || label->objectName().startsWith("leafhead"))) {
+                    int brainProgress = ui->zombiesProgressBar->value();
+                    if (brainProgress < 15) {
+                        qDebug() << "Cannot pick tall or leafhead zombie yet. Brain progress: " << brainProgress;
+                        return;
+                    }else
+                     ui->zombiesProgressBar->setValue(brainProgress - 15);
+                }
+
+                // Check if brain progress bar is at least 20% for buckethead and astronaut zombies
+                if (label && (label->objectName().startsWith("bucked_head") || label->objectName().startsWith("astronaut"))) {
+                    int brainProgress = ui->zombiesProgressBar->value();
+                    if (brainProgress < 20) {
+                        qDebug() << "Cannot pick buckethead or astronaut zombie yet. Brain progress: " << brainProgress;
+                        return;
+                    }else
+                        ui->zombiesProgressBar->setValue(brainProgress - 20);
+                }
+
+                // Check if brain progress bar is at least 80% for purplehair zombie
+                if (label && label->objectName().startsWith("purplehair")) {
+                    int brainProgress = ui->zombiesProgressBar->value();
+                    if (brainProgress < 80) {
+                        qDebug() << "Cannot pick purplehair zombie yet. Brain progress: " << brainProgress;
+                        return;
+                    }else
+                         ui->zombiesProgressBar->setValue(brainProgress - 80);
+                }
+
+                // Check if sun progress bar is at least 10% for peashooter plant
+                if (label && label->objectName().startsWith("peashooter")) {
+                    int sunProgress = ui->plantsProgressBar->value();
+                    if (sunProgress < 10) {
+                        qDebug() << "Cannot pick peashooter plant yet. Sun progress: " << sunProgress;
+                        return;
+                    }else
+                         ui->plantsProgressBar->setValue(sunProgress - 10);
+                }
+
+                // Check if sun progress bar is at least 15% for two_peashooter and walnut plants
+                if (label && (label->objectName().startsWith("two_peashooter") || label->objectName().startsWith("walnut"))) {
+                    int sunProgress = ui->plantsProgressBar->value();
+                    if (sunProgress < 15) {
+                        qDebug() << "Cannot pick two_peashooter or walnut plant yet. Sun progress: " << sunProgress;
+                        return;
+                    }else
+                        ui->plantsProgressBar->setValue(sunProgress - 15);
+                }
+
+                // Check if sun progress bar is at least 20% for boomerang plant
+                if (label && label->objectName().startsWith("boomerang")) {
+                    int sunProgress = ui->plantsProgressBar->value();
+                    if (sunProgress < 20) {
+                        qDebug() << "Cannot pick boomerang plant yet. Sun progress: " << sunProgress;
+                        return;
+                    }else
+                         ui->plantsProgressBar->setValue(sunProgress - 20);
+                }
+
+                // Check if sun progress bar is at least 30% for jalapino plant
+                if (label && label->objectName().startsWith("jelapino")) {
+                    int sunProgress = ui->plantsProgressBar->value();
+                    if (sunProgress < 30) {
+                        qDebug() << "Cannot pick jelapino plant yet. Sun progress: " << sunProgress;
+                        return;
+                    }else
+                         ui->plantsProgressBar->setValue(sunProgress - 30);
+                }
+
+                // Check if sun progress bar is at least 40% for plum_mine plant
+                if (label && label->objectName().startsWith("plum_mine")) {
+                    int sunProgress = ui->plantsProgressBar->value();
+                    if (sunProgress < 40) {
+                        qDebug() << "Cannot pick plum_mine plant yet. Sun progress: " << sunProgress;
+                        return;
+                    }else
+                          ui->plantsProgressBar->setValue(sunProgress - 40);
+                }
+
+                // Proceed with drag operation if all conditions are met
+                currentLabel = label;
+
+                // Create a QDrag object
+                QDrag *drag = new QDrag(this);
+                QMimeData *mimeData = new QMimeData;
+
+                // Set a textual representation of the object being dragged
+                mimeData->setText("DraggedLabel");
+                drag->setMimeData(mimeData);
+
+                // Set the pixmap to be dragged (scaled to the label size)
+                drag->setPixmap(label->pixmap().scaled(label->size(), Qt::KeepAspectRatio));
+
+                // Start the drag operation
+                Qt::DropAction dropAction = drag->exec(Qt::CopyAction | Qt::MoveAction);
+            }
+
+            QLabel *label = dynamic_cast<QLabel*>(childAt(event->pos()));
+
+            // Handling the sun and brain items for the game
+            if (label && (label->objectName() == "sun" || label->objectName() == "brain")) {
+                if (label->objectName() == "sun") {
+                    int newValue = ui->plantsProgressBar->value() + 5;
+                    ui->plantsProgressBar->setValue(newValue > 100 ? 100 : newValue);
+                } else if (label->objectName() == "brain") {
+                    int newValue = ui->zombiesProgressBar->value() + 5;
+                    ui->zombiesProgressBar->setValue(newValue > 100 ? 100 : newValue);
+                }
+                label->deleteLater();
+            } else {
+                QMainWindow::mousePressEvent(event);
+            }
+        } catch (const std::exception &e) {
+            qDebug() << "Exception in mousePressEvent: " << e.what();
+        } catch (...) {
+            qDebug() << "Unknown exception in mousePressEvent";
         }
     }
-}
 
-void MainWindow::mouseMoveEvent(QMouseEvent *event)
-{
-    if (currentLabel && event->buttons() & Qt::LeftButton) {
-        // Move the label with the mouse movement
-        currentLabel->move(event->globalPos() - QPoint(currentLabel->width() / 2, currentLabel->height() / 2));
+    void MainWindow::mouseMoveEvent(QMouseEvent *event)
+    {
+          try {
+        if (currentLabel && event->buttons() & Qt::LeftButton) {
+            // Move the label with the mouse movement
+            currentLabel->move(event->globalPos() - QPoint(currentLabel->width() / 2, currentLabel->height() / 2));
+        }
+        } catch (const std::exception &e) {
+              qDebug() << "Exception in mouseMoveEvent: " << e.what();
+          } catch (...) {
+              qDebug() << "Unknown exception in mouseMoveEvent";
+          }
     }
-}
 
-void MainWindow::dragEnterEvent(QDragEnterEvent *event)
-{
-    // Accept drag events if they contain text indicating they are a "DraggedLabel"
-    if (event->mimeData()->hasText() && event->mimeData()->text() == "DraggedLabel") {
-        event->acceptProposedAction();
+    void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+    {
+         try {
+        // Accept drag events if they contain text indicating they are a "DraggedLabel"
+        if (event->mimeData()->hasText() && event->mimeData()->text() == "DraggedLabel") {
+            event->acceptProposedAction();
+        }
+        } catch (const std::exception &e) {
+              qDebug() << "Exception in dragEnterEvent: " << e.what();
+          } catch (...) {
+              qDebug() << "Unknown exception in dragEnterEvent";
+          }
     }
-}
 
-void MainWindow::dropEvent(QDropEvent *event)
-{
-    // Handle drop events for "DraggedLabel"
-    if (event->mimeData()->hasText() && event->mimeData()->text() == "DraggedLabel"&& ui->frame->geometry().contains(event->position().toPoint())) {
-            QString labelName = currentLabel->objectName();
-            if (labelMap.contains(labelName)&& speedMap.contains(labelName)) {
-                QString pixmapPath = labelMap[labelName];
-                int speed = speedMap[labelName];
-                // Create a new QLabel at the drop position
-                QLabel *newLabel = new QLabel(this);
-                newLabel->setPixmap(QPixmap(pixmapPath).scaled(50, 50, Qt::KeepAspectRatio)); // Example size
-                newLabel->setGeometry(event->position().toPoint().x(), event->position().toPoint().y(), 30, 40); // Example size
-                newLabel->setScaledContents(true); // Ensure image scales to label size
-                newLabel->show();
+    void MainWindow::dropEvent(QDropEvent *event)
+    {
+        try {
+            if (event->mimeData()->hasText() && event->mimeData()->text() == "DraggedLabel" && ui->widget->geometry().contains(event->position().toPoint())) {
+                QString labelName = currentLabel->objectName();
+                QPoint dropPos = event->position().toPoint();
 
-                QPoint snappedPos = snapToCell(event->position().toPoint());
-                           newLabel->move(snappedPos);
-                // Start a new thread to move the label
-                MoveThread *moveThread = new MoveThread(newLabel, ui->frame,speed, this);
-                connect(moveThread, &MoveThread::gameOver, this, &MainWindow::gameOver);
-                moveThreads.append(moveThread);
-                moveThread->start();
-                QString plantType = event->mimeData()->text();
-}
-                else if (plantslabel.contains(labelName)) {
-                    QString pixmapPath = plantslabel[labelName];
-                    //int speed = speedMap[labelName];
-                    // Create a new QLabel at the drop position
+                if (labelMap.contains(labelName) && speedMap.contains(labelName)) {
+                    // Calculate the drop area for zombies (rightmost fifth of the frame)
+                    int dropAreaStartX = ui->widget->width() * 4 / 5;
+
+                    // Ensure zombies are dropped in the rightmost fifth of the frame
+                    if (dropPos.x() < dropAreaStartX) {
+                        return; // Ignore drop if it's outside the designated area
+                    }
+
+                    // Check if there is already a plant at the drop position
+                    bool isPlantPresent = false;
+                    for (QLabel *plant : plants) {
+                        if (plant->geometry().contains(dropPos)) {
+                            isPlantPresent = true;
+                            break;
+                        }
+                    }
+
+                    if (isPlantPresent) {
+                        return; // Ignore drop if there is already a plant at the position
+                    }
+
+                    QString pixmapPath = labelMap[labelName];
+                    int speed = speedMap[labelName];
+
                     QLabel *newLabel = new QLabel(this);
-                    newLabel->setPixmap(QPixmap(pixmapPath).scaled(50, 50, Qt::KeepAspectRatio)); // Example size
-                    newLabel->setGeometry(event->position().toPoint().x(), event->position().toPoint().y(), 30, 40); // Example size
-                    newLabel->setScaledContents(true); // Ensure image scales to label size
+                    newLabel->setPixmap(QPixmap(pixmapPath).scaled(50, 50, Qt::KeepAspectRatio));
+                    newLabel->setGeometry(dropPos.x(), dropPos.y(), 50, 50);
+                    newLabel->setParent(this);
+                    newLabel->setScaledContents(true);
                     newLabel->show();
 
-                    // Start a new thread to move the label
-                    //MoveThread *moveThread = new MoveThread(newLabel, ui->frame,speed, this);
-                    //connect(moveThread, &MoveThread::gameOver, this, &MainWindow::gameOver);
-                    //moveThreads.append(moveThread);
-                   // moveThread->start();
-                    QString plantType = event->mimeData()->text();
-                    QPoint snappedPos = snapToCell(event->position().toPoint());
-                               newLabel->move(snappedPos);
-            }
+                    QProgressBar *zombieEnergyProgressBar = new QProgressBar(this);
+                    zombieEnergyProgressBar->setMinimum(0);
+                    zombieEnergyProgressBar->setMaximum(100);
+                    zombieEnergyProgressBar->setValue(100); // Initial energy value
+                    zombieEnergyProgressBar->setGeometry(newLabel->x(), newLabel->y() - 10, 50, 10);
+                    zombieEnergyProgressBar->show();
+
+                    QPoint snappedPos = snapToCell(dropPos);
+                    newLabel->move(snappedPos);
+
+                    MoveThread *moveThread = new MoveThread(newLabel, ui->widget, speed, this);
+                    connect(moveThread, &MoveThread::gameOver, this, &MainWindow::gameOver);
+                    connect(moveThread, &MoveThread::energyChanged, zombieEnergyProgressBar, &QProgressBar::setValue);
+                    connect(moveThread, &MoveThread::energyChanged, this, [=](int currentEnergy) {
+                        if (currentEnergy <= 0) {
+                            newLabel->hide();
+                            zombieEnergyProgressBar->hide();
+                            newLabel->deleteLater();
+                            zombieEnergyProgressBar->deleteLater();
+                        }
+                    });
+
+                    connect(moveThread, &MoveThread::positionChanged, this, [=](const QPoint &pos) {
+                        zombieEnergyProgressBar->move(pos.x(), pos.y() - 10);
+                    });
+
+                    moveThreads.append(moveThread);
+                    moveThread->start();
+
+                    zombies.append(newLabel);
+                } else if (plantslabel.contains(labelName)) {
+                    QString pixmapPath = plantslabel[labelName];
+                    int dropAreaEndX = ui->widget->width() / 2;
+                    if (dropPos.x() > dropAreaEndX) {
+                        return; // Ignore drop if it's outside the designated area
+                    }
+
+                    // Check if there is already a zombie at the drop position
+                    bool isZombiePresent = false;
+                    for (QLabel *zombie : zombies) {
+                        if (zombie->geometry().contains(dropPos)) {
+                            isZombiePresent = true;
+                            break;
+                        }
+                    }
+
+                    if (isZombiePresent) {
+                        return; // Ignore drop if there is already a zombie at the position
+                    }
+
+                    QLabel *newLabel = new QLabel(this);
+                    newLabel->setPixmap(QPixmap(pixmapPath).scaled(50, 50, Qt::KeepAspectRatio));
+                    newLabel->setGeometry(dropPos.x(), dropPos.y(), 50, 50);
+                    newLabel->setParent(this);
+                    newLabel->setScaledContents(true);
+                    newLabel->show();
+
+                    QPoint snappedPos = snapToCell(dropPos);
+                    newLabel->move(snappedPos);
+
+                    QString plantType = labelName;
+                    if (plantType == "jelapino") {
+                        JalapenoMoveThread *jalapenoThread = new JalapenoMoveThread(newLabel, ui->widget, 50, this);
+                        connect(jalapenoThread, &JalapenoMoveThread::energyChanged, this, [=](QLabel *zombie, int damage) {
+                            int currentEnergy = energyProgressBar->value();
+                            int newEnergy = currentEnergy - damage;
+                            energyProgressBar->setValue(newEnergy);
+                            if (newEnergy <= 0) {
+                                zombie->hide();
+                                zombie->deleteLater();
+                            }
+                        });
+                        connect(jalapenoThread, &JalapenoMoveThread::jalapenoFinished, this, [=]() {
+                            newLabel->hide();
+                            newLabel->deleteLater();
+                        });
+                        jalapenoThread->start();
+                    } else if (shoot.contains(plantType)) {
+                        QTimer *shootTimer = new QTimer(this);
+                        connect(shootTimer, &QTimer::timeout, this, [this, newLabel, plantType]() {
+                            QString pixmapPath2 = shoot[plantType];
+
+                            QLabel *projectile = new QLabel(this);
+                            projectile->setPixmap(QPixmap(pixmapPath2).scaled(10, 10, Qt::KeepAspectRatio));
+                            projectile->setParent(this);
+                            projectile->setFixedSize(10, 10);
+                            projectile->move(newLabel->geometry().right(), newLabel->geometry().center().y() - 5);
+
+                            projectile->setObjectName("bullet");
+                            projectile->setScaledContents(true);
+                            projectile->show();
+                            projectile->raise();
+
+                            ShootThread *shootThread = new ShootThread(projectile, ui->widget, this);
+                            connect(shootThread, &ShootThread::hitZombie, this, &MainWindow::onProjectileHitZombie);
+                            connect(shootThread, &ShootThread::finished, shootThread, &QObject::deleteLater); // Ensure thread cleanup
+                            shootThread->start();
+                        });
+                        shootTimer->start(2000);
+                    }
+
+                    plants.append(newLabel);
+                }
                 event->acceptProposedAction();
             }
+        } catch (const std::exception &e) {
+            qDebug() << "Exception in dropEvent: " << e.what();
+        } catch (...) {
+            qDebug() << "Unknown exception in dropEvent";
+        }
+    }
 
+
+
+void MainWindow::onProjectileHitZombie(QLabel *projectile)
+{
+    try {
+        bool hitZombie = false;
+        for (int i = 0; i < zombies.size(); ++i) {
+            QLabel *zombie = zombies[i];
+            if (checkProjectileZombieCollision(projectile, zombie)) {
+                hitZombie = true;
+
+                // Calculate damage based on the projectile
+                int damage =   zombieEnergyMap[zombie] * 0.05;
+
+                // Reduce zombie's energy
+                int currentEnergy = zombieEnergyMap[zombie];
+                int newEnergy = currentEnergy - damage;
+
+                // Update zombie's energy (progress bar)
+                zombieEnergyMap[zombie] = newEnergy;
+                zombieProgressBars[zombie]->setValue(newEnergy);
+
+                // If zombie's energy is depleted, remove it from the game
+                if (newEnergy <= 0) {
+                    zombies.removeAt(i);
+                    zombie->hide();
+                   zombieProgressBars[zombie]->hide();
+                    zombie->deleteLater();
+                  zombieProgressBars[zombie]->deleteLater();
+                }
+
+                // Delete the projectile after it hits a zombie
+                projectile->deleteLater();
+
+                break; // Exit loop after handling collision with one zombie
+            }
+        }
+
+        if (!hitZombie) {
+            projectile->deleteLater(); // Delete projectile if it didn't hit any zombie
+        }
+
+    } catch (const std::exception &e) {
+        qDebug() << "Exception in onProjectileHitZombie: " << e.what();
+    } catch (...) {
+        qDebug() << "Unknown exception in onProjectileHitZombie";
+    }
 }
+
+
+
+
+
 QPoint MainWindow::snapToCell(const QPoint &pos)
 {
-    int x = (pos.x() / cellWidth) * cellWidth;  // Snap to the nearest cell boundary
-    int y = (pos.y() / cellHeight) * cellHeight;
-    return QPoint(x, y);
+        try {
+    int x = pos.x() - this->x() - 50; // Account for 50-pixel margin
+     int y = pos.y() - this->y() - 50; // Account for 50-pixel margin
+
+     x = (x / cellWidth) * cellWidth +this->x() + 50; // Snap to the nearest cell boundary
+     y = (y / cellHeight) * cellHeight +this->y() + 50;
+     return QPoint(x, y);
+    } catch (const std::exception &e) {
+           qDebug() << "Exception in snapToCell: " << e.what();
+           return QPoint();
+       } catch (...) {
+           qDebug() << "Unknown exception in snapToCell";
+           return QPoint();
+       }
 }
 
 void MainWindow::gameOver()
 {
+      try {
     if (!gameEnded) {
-           gameEnded = true; // Set the game ended flag
-           QMessageBox::information(this, "Game Over", "A zombie reached the end of the frame. Game Over!");
+            gameEnded = true; // Set the game ended flag
+            QMessageBox::information(this, "Game Over", "A zombie reached the end of the frame. Game Over!");
 
-           // Stop all running threads
-           //for (auto thread : moveThreads) {
-          //     thread->quit();
-          //     thread->wait();
-          // }
+            // Stop all running threads
+            for (auto thread : moveThreads) {
+                if (thread) {
+                    thread->quit();
+                    thread->wait();
+                    delete thread;
+                }
+            }
+            moveThreads.clear();
+        }
+    } catch (const std::exception &e) {
+          qDebug() << "Exception in gameOver: " << e.what();
+      } catch (...) {
+          qDebug() << "Unknown exception in gameOver";
+      }
 
-           // Optionally, you can close the application
-          // qApp->quit();
-       }
+}
 
+
+
+bool MainWindow::isZombieInRow(int y)
+{
+    for (QLabel *zombie : zombies) {
+        if (abs(zombie->geometry().center().y() - y) < cellHeight / 2) {
+            return true;
+        }
+    }
+    return false;
+}
+void MainWindow::updateProjectilePosition()
+{
+    if (currentProjectile) {
+        // Update the position of the current projectile
+        currentProjectile->move(currentProjectile->x() , currentProjectile->y()); // Adjust the movement as needed
+
+        // Check if the projectile has moved out of bounds
+        if (currentProjectile->x() > this->width()) {
+            currentProjectile->deleteLater(); // Remove the projectile if it's out of bounds
+            currentProjectile = nullptr; // Reset currentProjectile pointer
+        }
+    }
+}
+void MainWindow::updateEnergy(int currentEnergy)
+{
+    // Update progress bar or any other UI element with the current energy value
+    energyProgressBar->setValue(currentEnergy);
+    qDebug() << "Energy updated: " << currentEnergy;
+}
+void MainWindow::updateEnergyProgressBar(int currentEnergy)
+{
+    // Update the progress bar value based on currentEnergy
+    energyProgressBar->setValue(currentEnergy);
+
+    // Optionally, update other UI elements based on energy level
+}
+
+bool MainWindow::checkProjectileZombieCollision(QLabel *projectile, QLabel *zombie) {
+    if (!projectile || !zombie) {
+        return false; // Return false if either label is null
+    }
+
+    QRect projectileRect = projectile->geometry();
+    QRect zombieRect = zombie->geometry();
+
+    return projectileRect.intersects(zombieRect);
+}
+
+void MainWindow::dropRandomObject()
+{
+    // Randomly decide between sun and brain
+    bool isSun = QRandomGenerator::global()->bounded(2) == 0;
+
+    QLabel *fallingObject = new QLabel(this); // Add the label to the frame
+    if (isSun) {
+        fallingObject->setPixmap(QPixmap(food["sun"]).scaled(30, 30, Qt::KeepAspectRatio));
+        fallingObject->setObjectName("sun");
+    } else {
+        fallingObject->setPixmap(QPixmap(food["brain"]).scaled(30, 30, Qt::KeepAspectRatio));
+        fallingObject->setObjectName("brain");
+    }
+
+    // Ensure the object starts falling within the frame boundaries
+    int x = QRandomGenerator::global()->bounded(this->width() - 30);
+    fallingObject->setGeometry(x, 0, 30, 30);
+    fallingObject->show();
+
+    QTimer *moveTimer = new QTimer(fallingObject);
+     connect(moveTimer, &QTimer::timeout, this, [fallingObject, moveTimer, this]() {
+         fallingObject->move(fallingObject->x(), fallingObject->y() + 5);
+         if (fallingObject->y() > this->height()) {
+             moveTimer->stop();
+             delete fallingObject;
+             delete moveTimer;
+         }
+     });
+     moveTimer->start(50);
+}
+
+void MainWindow::setupZombieLabels()
+{
+    QStringList zombieNames = {"regular", "bucked_head", "leafhead", "tall", "astronaut", "purplehair"};
+
+    for (const QString &name : zombieNames) {
+        QLabel *label = findChild<QLabel*>(name);
+        if (label) {
+            label->setAcceptDrops(true);
+            label->setProperty("isZombie", true); // Optionally, set a property to identify as a zombie
+        }
+    }
+}
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    // Ensure all threads are properly terminated
+    for (auto thread : moveThreads) {
+        thread->quit();
+        thread->wait();
+        delete thread;
+    }
+    moveThreads.clear();
+
+    QMainWindow::closeEvent(event);
+}
+
+void MainWindow::jalapenoEnergyChanged(QLabel *zombie, int damage)
+{
+    // Adjust the energy of the zombie
+    int currentEnergy = zombieEnergyMap.value(zombie, 100); // Assuming a map to store zombie energies
+    int newEnergy = qMax(currentEnergy - damage, 0);
+    zombieEnergyMap[zombie] = newEnergy;
+
+    // Update the corresponding progress bar
+    QProgressBar *zombieProgressBar = zombieProgressBars.value(zombie, nullptr);
+    if (zombieProgressBar) {
+        zombieProgressBar->setValue(newEnergy);
+        if (newEnergy <= 0) {
+            zombie->hide(); // Example: Hide zombie when energy is depleted
+            zombieProgressBar->hide();
+        }
+    }
+}
+
+void MainWindow::updateCornometer() {
+    elapsedTime++;
+    int maxTime = 210;  // Total time in seconds (3 minutes and 30 seconds)
+    int remainingTime = maxTime - elapsedTime;
+
+    if (remainingTime >= 0) {
+        ui->cornometerProgressBar->setValue(remainingTime);
+
+        // Debugging statement
+       // qDebug() << "Cornometer Progress Bar Updated:" << remainingTime;
+
+        // Change color in the last 30 seconds
+        if (remainingTime <= 30) {
+            ui->cornometerProgressBar->setStyleSheet(
+                "QProgressBar {"
+                "    border: 2px solid grey;"
+                "    border-radius: 5px;"
+                "    text-align: center;"
+                "    background: white;"
+                "}"
+                "QProgressBar::chunk {"
+                "    background-color: red;"
+                "    width: 20px;"
+                "}"
+            );
+        } else {
+            ui->cornometerProgressBar->setStyleSheet(
+                "QProgressBar {"
+                "    border: 2px solid grey;"
+                "    border-radius: 5px;"
+                "    text-align: center;"
+                "    background: white;"
+                "}"
+                "QProgressBar::chunk {"
+                "    background-color: green;"
+                "    width: 20px;"
+                "}"
+            );
+        }
+    } else {
+        timer->stop();  // Stop the timer when it reaches 0
+        QMessageBox::information(this, "Time's up!", "Game over!");
+       // qDebug() << "Timer stopped. Cornometer Progress Bar reached 0.";
+    }
 }
